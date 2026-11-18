@@ -28,13 +28,8 @@ function applyTranslations(lang) {
         if (translations[lang][key]) el.innerHTML = translations[lang][key];
     });
     document.getElementById('ticketText').placeholder = translations[lang].textPlaceholder;
+    renderTemplatesList();
 }
-
-applyTranslations(currentLang);
-
-document.getElementById('langToggle').addEventListener('click', () => {
-    applyTranslations(currentLang === 'es' ? 'en' : 'es');
-});
 
 // Theme toggle
 const themeToggle = document.getElementById('themeToggle');
@@ -58,7 +53,7 @@ if (isIOS && !navigator.bluetooth) {
     document.getElementById('iosAlert').style.display = 'block';
 }
 
-// UI State Elements
+// UI Elements
 const statusIndicator = document.getElementById('statusIndicator');
 const statusText = document.getElementById('statusText');
 const uploadInput = document.getElementById('upload');
@@ -74,6 +69,15 @@ const angleLabel = document.getElementById('angleLabel');
 const thresholdRange = document.getElementById('thresholdRange');
 const thresholdVal = document.getElementById('thresholdVal');
 const previewWrapper = document.querySelector('.preview-wrapper');
+const templatesContainer = document.getElementById('templatesContainer');
+const saveTemplateBtn = document.getElementById('saveTemplateBtn');
+const clearTextBtn = document.getElementById('clearTextBtn');
+
+applyTranslations(currentLang);
+
+document.getElementById('langToggle').addEventListener('click', () => {
+    applyTranslations(currentLang === 'es' ? 'en' : 'es');
+});
 
 let loadedImage = null;
 let currentRotation = 0;
@@ -84,6 +88,59 @@ function updateStatus(isConnected, messageKey) {
     statusText.textContent = translations[currentLang][messageKey] || messageKey;
 }
 
+// --- Local Templates Management (localStorage) ---
+function getSavedTemplates() {
+    try {
+        return JSON.parse(localStorage.getItem('escpos-templates')) || {};
+    } catch (error) {
+        console.error('Failed to parse saved templates from local storage.', error);
+        return {};
+    }
+}
+
+function renderTemplatesList() {
+    templatesContainer.innerHTML = '';
+    const templates = getSavedTemplates();
+    const keys = Object.keys(templates);
+
+    if (keys.length === 0) return;
+
+    keys.forEach(name => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn-chip';
+        btn.textContent = `📋 ${name}`;
+        btn.title = translations[currentLang].templateButtonTitle;
+        btn.onclick = () => { ticketTextarea.value = templates[name]; };
+        btn.ondblclick = () => {
+            const message = translations[currentLang].confirmDeleteTemplate.replace('{name}', name);
+            if (confirm(message)) {
+                delete templates[name];
+                localStorage.setItem('escpos-templates', JSON.stringify(templates));
+                renderTemplatesList();
+            }
+        };
+        templatesContainer.appendChild(btn);
+    });
+}
+
+saveTemplateBtn.addEventListener('click', () => {
+    const text = ticketTextarea.value.trim();
+    if (!text) return alert(translations[currentLang].alertNoContent);
+    const name = prompt(translations[currentLang].promptTemplateName)?.trim();
+    if (!name) return;
+
+    const templates = getSavedTemplates();
+    templates[name] = text;
+    localStorage.setItem('escpos-templates', JSON.stringify(templates));
+    renderTemplatesList();
+});
+
+clearTextBtn.addEventListener('click', () => {
+    ticketTextarea.value = '';
+});
+
+// --- Image Processing ---
 function updatePreviewCanvas() {
     if (!loadedImage) return;
     const maxWidth = parseInt(paperWidthSelect.value);
@@ -138,6 +195,7 @@ paperWidthSelect.addEventListener('change', () => {
     if (loadedImage) updatePreviewCanvas();
 });
 
+// --- Print Flow with Dynamic Progress ---
 printButton.addEventListener('click', async () => {
     const textContent = ticketTextarea.value.trim();
     if (!textContent && !rasterBytesResult) {
@@ -153,7 +211,6 @@ printButton.addEventListener('click', async () => {
         });
 
         updateStatus(true, "statusConnected");
-        updateStatus(true, "statusPrinting");
 
         const printBuffer = buildPrintBuffer({
             text: textContent,
@@ -163,12 +220,17 @@ printButton.addEventListener('click', async () => {
             autoCut: autoCutCheckbox.checked
         });
 
-        await bluetooth.sendData(printBuffer);
+        updateStatus(true, "statusPrinting");
+        await bluetooth.sendData(printBuffer, (percent) => {
+            printButton.textContent = translations[currentLang].sendingProgress.replace('{percent}', percent);
+        });
         updateStatus(true, "statusSuccess");
+        printButton.innerHTML = `🖨️ <span data-i18n="printBtnText">${translations[currentLang].printBtnText}</span>`;
     } catch (error) {
         console.error(error);
         updateStatus(false, "statusError");
         alert(translations[currentLang].errorPrefix + (error.message === "WEB_BLUETOOTH_NOT_SUPPORTED" ? translations[currentLang].alertNoBluetooth : error.message));
+        printButton.innerHTML = `🖨️ <span data-i18n="printBtnText">${translations[currentLang].printBtnText}</span>`;
     } finally {
         printButton.disabled = false;
     }

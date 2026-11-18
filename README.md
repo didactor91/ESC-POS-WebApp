@@ -5,6 +5,7 @@ Web demo for preparing and printing tickets on ESC/POS thermal printers over Blu
 ## Features
 
 - Add free-form text and/or an image to a ticket.
+- Save, load, and delete reusable text templates in the browser.
 - Preview images in black and white and adjust their threshold.
 - Rotate images and fit them to 58 mm or 80 mm paper.
 - Choose normal or double-height text and enable automatic paper cutting.
@@ -30,11 +31,12 @@ Open <http://localhost:8000> in a compatible browser. To access the app from ano
 ## Usage
 
 1. Select the paper width and print options.
-2. Enter text, select an image, or use both.
+2. Enter text, select an image, or use both. Save reusable text with **Save Template**; click a saved template to load it, or double-click it to delete it. Use **Clear** to empty the text field.
 3. Adjust the image rotation and threshold as needed.
 4. Click **Connect & Print** and choose the printer in the browser dialog.
 
 The printer is selected and the print job is sent when you click the button, using the browser's Web Bluetooth dialog.
+Templates are stored in the browser's local storage on the current device. They are not uploaded or synchronized.
 
 ## Project structure
 

@@ -12,8 +12,11 @@ export const translations = {
         fontNormal: "Normal",
         fontTall: "Double Tall",
         autoCutLabel: "Auto-cut paper on finish",
-        textTitle: "📝 Free Text / Header (Optional)",
-        textPlaceholder: "Add notes or custom text...",
+        textTitle: "📝 Free Text / Header & Local Templates",
+        textPlaceholder: "Add notes, headers or save as a local template...",
+        saveTemplateBtn: "💾 Save Template",
+        clearTextBtn: "🗑️ Clear",
+        sendingProgress: "📤 Sending... {percent}%",
         imageTitle: "🖼️ Image / Document",
         dropzoneText: "📁 Tap to select image",
         rotateBtn: "Rotate",
@@ -24,6 +27,9 @@ export const translations = {
         iosWarning: "⚠️ <strong>iOS Notice (iPhone/iPad):</strong> Safari does not support native Bluetooth. Please open this URL using the free app <strong>Bluefy Browser</strong> from the App Store to print.",
         alertNoContent: "Please add text or select an image before printing.",
         alertNoBluetooth: "Browser does not support Web Bluetooth. If using iOS, please use Bluefy Browser.",
+        promptTemplateName: "Enter a name for this local template:",
+        templateButtonTitle: "Click to load / Double-click to delete",
+        confirmDeleteTemplate: "Delete template \"{name}\"?",
         errorPrefix: "Error: "
     },
     es: {
@@ -39,8 +45,11 @@ export const translations = {
         fontNormal: "Normal",
         fontTall: "Doble Alto",
         autoCutLabel: "Corte automático al finalizar",
-        textTitle: "📝 Texto / Cabecera (Opcional)",
-        textPlaceholder: "Añade notas o texto libre...",
+        textTitle: "📝 Texto / Cabecera y Plantillas Locales",
+        textPlaceholder: "Añade notas o guarda esto como plantilla local...",
+        saveTemplateBtn: "💾 Guardar Plantilla",
+        clearTextBtn: "🗑️ Vaciar",
+        sendingProgress: "📤 Enviando... {percent}%",
         imageTitle: "🖼️ Imagen / Documento",
         dropzoneText: "📁 Toca para seleccionar imagen",
         rotateBtn: "Rotar",
@@ -51,6 +60,9 @@ export const translations = {
         iosWarning: "⚠️ <strong>Atención iOS (iPhone/iPad):</strong> Safari no permite Bluetooth nativo. Abre esta misma URL con la app gratuita <strong>Bluefy Browser</strong> desde la App Store para poder imprimir.",
         alertNoContent: "Añade texto o selecciona una imagen antes de imprimir.",
         alertNoBluetooth: "El navegador no soporta Web Bluetooth. Si usas iOS, recuerda abrir la app con Bluefy Browser.",
+        promptTemplateName: "Introduce un nombre para esta plantilla local:",
+        templateButtonTitle: "Haz clic para cargar / Doble clic para borrar",
+        confirmDeleteTemplate: "¿Borrar la plantilla \"{name}\"?",
         errorPrefix: "Error: "
     }
 };

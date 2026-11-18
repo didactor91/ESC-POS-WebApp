@@ -37,14 +37,21 @@ export class BluetoothService {
     async sendData(bytes, onProgress) {
         const CHUNK_SIZE = 256;
         const DELAY_MS = 10;
+        const total = bytes.length;
 
-        for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+        for (let i = 0; i < total; i += CHUNK_SIZE) {
             const chunk = bytes.slice(i, i + CHUNK_SIZE);
             if (this.characteristic.writeValueWithoutResponse) {
                 await this.characteristic.writeValueWithoutResponse(chunk);
             } else {
                 await this.characteristic.writeValue(chunk);
             }
+
+            if (onProgress) {
+                const percent = Math.min(100, Math.round(((i + chunk.length) / total) * 100));
+                onProgress(percent);
+            }
+
             await new Promise(r => setTimeout(r, DELAY_MS));
         }
     }

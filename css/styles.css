@@ -142,3 +142,45 @@ select:focus, textarea:focus { outline: none; border-color: var(--primary); back
     color: var(--warn-text); padding: 12px; border-radius: 12px; font-size: 12.5px; margin-bottom: 14px; line-height: 1.4;
 }
 .ios-banner strong { font-weight: 700; }
+/* Nuevos estilos para Plantillas Locales */
+.templates-bar {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.btn-chip {
+    background: var(--surface-subtle);
+    color: var(--primary);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-chip:hover { border-color: var(--primary); background: var(--surface); }
+
+.template-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.btn-small {
+    background: var(--surface-subtle);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.btn-small:hover { background: var(--border); }
