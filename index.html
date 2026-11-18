@@ -3,211 +3,578 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Impresora ESC/POS Web Bluetooth</title>
+    <title>ESC/POS Thermal Studio - 58mm</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; padding: 20px; background: #f4f4f9; color: #333; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto; }
-        button { background: #007AFF; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 15px; font-weight: bold; }
-        button:active { background: #0056b3; }
-        input[type="file"] { margin: 15px 0; width: 100%; }
-        img { max-width: 180px; display: block; margin: 10px auto; border: 1px solid #ddd; border-radius: 6px; }
-        
-        /* Indicador Visual de Estado */
-        .status { display: inline-flex; align-items: center; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: bold; margin-bottom: 20px; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; }
-        .status.disconnected { background-color: #ffebee; color: #c62828; }
-        .status.disconnected .dot { background-color: #f44336; }
-        .status.connected { background-color: #e8f5e9; color: #2e7d32; }
-        .status.connected .dot { background-color: #4caf50; }
+        :root {
+            --bg: #f1f5f9;
+            --surface: #ffffff;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --border: #e2e8f0;
+            --success-bg: #dcfce7;
+            --success-text: #166534;
+            --danger-bg: #fee2e2;
+            --danger-text: #991b1b;
+            --radius: 14px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 16px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 520px;
+            margin: 0 auto;
+        }
+
+        /* Header & Status */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            padding: 4px 2px;
+        }
+
+        header h1 {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-badge.disconnected { background: var(--danger-bg); color: var(--danger-text); }
+        .status-badge.disconnected .dot { background: #ef4444; }
+        .status-badge.connected { background: var(--success-bg); color: var(--success-text); }
+        .status-badge.connected .dot { background: #22c55e; }
+
+        /* Cards */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-header h2 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        /* Grid & Form Elements */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+        select, textarea, input[type="range"] {
+            width: 100%;
+            font-family: inherit;
+            font-size: 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: #f8fafc;
+            color: var(--text);
+        }
+
+        select { padding: 9px 10px; }
+
+        textarea {
+            padding: 10px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 12.5px;
+            min-height: 100px;
+            resize: vertical;
+            line-height: 1.4;
+        }
+
+        select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+        }
+
+        /* File Dropzone */
+        .file-box {
+            border: 2px dashed #cbd5e1;
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+            cursor: pointer;
+            background: #f8fafc;
+            transition: border-color 0.2s;
+            margin-bottom: 12px;
+        }
+
+        .file-box:hover { border-color: var(--primary); }
+        .file-box span { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+
+        /* Image Tools & Thermal Preview */
+        .image-controls {
+            display: none;
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            margin-top: 10px;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .btn-tool {
+            flex: 1;
+            background: #fff;
+            border: 1px solid var(--border);
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--text);
+        }
+
+        .btn-tool:hover { background: #f1f5f9; }
+        .btn-tool.danger { color: #dc2626; }
+
+        .preview-wrapper {
+            background: #cbd5e1;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            overflow-x: auto;
+        }
+
+        #thermalCanvas {
+            background: #ffffff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            max-width: 100%;
+            height: auto;
+            image-rendering: pixelated;
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+            font-size: 13.5px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .btn-print {
+            width: 100%;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .btn-print:hover { background: var(--primary-hover); }
+        .btn-print:active { transform: scale(0.99); }
+        .btn-print:disabled { opacity: 0.6; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h2>Impresora Térmica Web</h2>
-        
-        <!-- Indicador Visual -->
-        <div id="statusIndicator" class="status disconnected">
+<div class="container">
+    <header>
+        <h1>🖨️ ESC/POS Thermal</h1>
+        <div id="statusIndicator" class="status-badge disconnected">
             <span class="dot"></span>
             <span id="statusText">Desconectada</span>
         </div>
+    </header>
 
-        <div>
-            <label for="upload">Selecciona una imagen:</label>
-            <input type="file" id="upload" accept="image/*">
-            <img id="preview" alt="Vista previa" style="display:none;">
+    <!-- CONFIGURACIÓN -->
+    <div class="card">
+        <div class="card-header">
+            <h2>⚙️ Ajustes de Impresora</h2>
         </div>
-
-        <button id="printBtn">Conectar e Imprimir</button>
+        <div class="grid-2">
+            <div>
+                <label for="paperWidth">Ancho de Papel</label>
+                <select id="paperWidth">
+                    <option value="384" selected>58 mm (384 px)</option>
+                    <option value="576">80 mm (576 px)</option>
+                </select>
+            </div>
+            <div>
+                <label for="fontSize">Tamaño de Fuente</label>
+                <select id="fontSize">
+                    <option value="normal" selected>Normal (32 cols)</option>
+                    <option value="tall">Doble Alto</option>
+                </select>
+            </div>
+        </div>
+        <label class="checkbox-row">
+            <input type="checkbox" id="autoCut" checked>
+            Avanzar papel y cortar al finalizar
+        </label>
     </div>
 
-    <script>
-        const statusIndicator = document.getElementById('statusIndicator');
-        const statusText = document.getElementById('statusText');
-        const upload = document.getElementById('upload');
-        const preview = document.getElementById('preview');
-        const printBtn = document.getElementById('printBtn');
+    <!-- CONTENIDO (TEXTO LIBRE) -->
+    <div class="card">
+        <div class="card-header">
+            <h2>📝 Texto Libre (Opcional)</h2>
+        </div>
+        <textarea id="ticketText" placeholder="Escribe notas o cabecera opcional..."></textarea>
+    </div>
 
-        let bluetoothDevice = null;
-        let bluetoothCharacteristic = null;
-        let imageDataBytes = null;
+    <!-- IMAGEN CON ROTACIÓN Y UMBRAL -->
+    <div class="card">
+        <div class="card-header">
+            <h2>🖼️ Imagen / Documento</h2>
+        </div>
 
-        // UUID estándar común para impresoras BLE ESC/POS
-        const SERVICE_UUID = '000018f0-0000-1000-8000-00805f9b34fb';
-        const CHARACTERISTIC_UUID = '00002af1-0000-1000-8000-00805f9b34fb';
+        <div class="file-box" onclick="document.getElementById('upload').click()">
+            <span>📁 Seleccionar imagen a imprimir</span>
+            <input type="file" id="upload" accept="image/*" style="display:none">
+        </div>
 
-        function actualizarEstadoUI(conectado, mensaje) {
-            if (conectado) {
-                statusIndicator.className = "status connected";
-                statusText.innerText = mensaje;
+        <div id="imageControls" class="image-controls">
+            <div class="toolbar">
+                <button type="button" class="btn-tool" id="rotateBtn">🔄 Rotar 90° (<span id="angleLabel">0°</span>)</button>
+                <button type="button" class="btn-tool danger" id="removeImgBtn">✕ Quitar</button>
+            </div>
+
+            <label for="thresholdRange">
+                Contraste / Umbral Blanco y Negro: <strong id="thresholdVal">145</strong>
+            </label>
+            <input type="range" id="thresholdRange" min="40" max="230" value="145" style="margin-bottom: 12px;">
+
+            <label>Vista previa real de impresión (1-bit):</label>
+            <div class="preview-wrapper">
+                <canvas id="thermalCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <button id="printBtn" class="btn-print">Conectar e Imprimir</button>
+</div>
+
+<script>
+    const statusIndicator = document.getElementById('statusIndicator');
+    const statusText = document.getElementById('statusText');
+    const upload = document.getElementById('upload');
+    const thermalCanvas = document.getElementById('thermalCanvas');
+    const imageControls = document.getElementById('imageControls');
+    const printBtn = document.getElementById('printBtn');
+    const paperWidthSelect = document.getElementById('paperWidth');
+    const fontSizeSelect = document.getElementById('fontSize');
+    const autoCutCheckbox = document.getElementById('autoCut');
+    const ticketTextarea = document.getElementById('ticketText');
+    const rotateBtn = document.getElementById('rotateBtn');
+    const removeImgBtn = document.getElementById('removeImgBtn');
+    const angleLabel = document.getElementById('angleLabel');
+    const thresholdRange = document.getElementById('thresholdRange');
+    const thresholdVal = document.getElementById('thresholdVal');
+
+    let bluetoothDevice = null;
+    let bluetoothCharacteristic = null;
+    let loadedImage = null;
+    let currentRotation = 0;
+    let imageRasterBytes = null;
+
+    const SERVICE_UUID = '000018f0-0000-1000-8000-00805f9b34fb';
+    const CHARACTERISTIC_UUID = '00002af1-0000-1000-8000-00805f9b34fb';
+
+    function actualizarEstadoUI(conectado, mensaje) {
+        statusIndicator.className = `status-badge ${conectado ? 'connected' : 'disconnected'}`;
+        statusText.innerText = mensaje;
+    }
+
+    function encodeCP858(str) {
+        const map = {
+            'á': 0xA0, 'é': 0x82, 'í': 0xA1, 'ó': 0xA2, 'ú': 0xA3,
+            'Á': 0xB5, 'É': 0x90, 'Í': 0xD6, 'Ó': 0xE0, 'Ú': 0xE9,
+            'ñ': 0xA4, 'Ñ': 0xA5, 'ü': 0x81, 'Ü': 0x9A,
+            'º': 0xA7, 'ª': 0xA6, '¿': 0xA8, '¡': 0xAD, '€': 0xD5
+        };
+        const bytes = [];
+        for (let i = 0; i < str.length; i++) {
+            const ch = str[i];
+            if (map[ch] !== undefined) {
+                bytes.push(map[ch]);
             } else {
-                statusIndicator.className = "status disconnected";
-                statusText.innerText = mensaje;
+                const code = str.charCodeAt(i);
+                bytes.push(code < 128 ? code : 0x3F);
             }
         }
+        return bytes;
+    }
 
-        // Cargar y procesar imagen a monocromático
-        upload.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                preview.src = event.target.result;
-                preview.style.display = 'block';
-                preview.onload = () => procesarImagenParaImpresora(preview);
+    upload.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+                loadedImage = img;
+                currentRotation = img.naturalWidth > img.naturalHeight ? 90 : 0;
+                angleLabel.innerText = `${currentRotation}°`;
+                imageControls.style.display = 'block';
+                procesarImagen();
             };
-            reader.readAsDataURL(file);
-        });
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
 
-        function procesarImagenParaImpresora(imgElement) {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
+    rotateBtn.addEventListener('click', () => {
+        if (!loadedImage) return;
+        currentRotation = (currentRotation + 90) % 360;
+        angleLabel.innerText = `${currentRotation}°`;
+        procesarImagen();
+    });
 
-            const maxWidth = 384; // 58mm
-            const scale = maxWidth / imgElement.naturalWidth;
-            const width = maxWidth;
-            const height = Math.floor(imgElement.naturalHeight * scale);
+    removeImgBtn.addEventListener('click', () => {
+        loadedImage = null;
+        imageRasterBytes = null;
+        upload.value = '';
+        imageControls.style.display = 'none';
+    });
 
-            canvas.width = width;
-            canvas.height = height;
+    thresholdRange.addEventListener('input', () => {
+        thresholdVal.innerText = thresholdRange.value;
+        if (loadedImage) procesarImagen();
+    });
 
-            ctx.drawImage(imgElement, 0, 0, width, height);
-            const imgData = ctx.getImageData(0, 0, width, height);
-            const pixels = imgData.data;
+    paperWidthSelect.addEventListener('change', () => {
+        if (loadedImage) procesarImagen();
+    });
 
-            const bytesW = Math.ceil(width / 8);
-            const bytesH = height;
-            
-            let rasterBuffer = [];
-            // Inicializar impresora y comando raster (GS v 0)
-            rasterBuffer.push(0x1B, 0x40); // ESC @ (Reset)
-            rasterBuffer.push(0x1D, 0x76, 0x30, 0x00);
-            rasterBuffer.push(bytesW & 0xFF, (bytesW >> 8) & 0xFF);
-            rasterBuffer.push(bytesH & 0xFF, (bytesH >> 8) & 0xFF);
+    function procesarImagen() {
+        if (!loadedImage) return;
 
-            for (let y = 0; y < height; y++) {
-                for (let x = 0; x < bytesW; x++) {
-                    let byte = 0;
-                    for (let b = 0; b < 8; b++) {
-                        let pxX = (x * 8) + b;
-                        if (pxX < width) {
-                            let idx = (y * width + pxX) * 4;
-                            let r = pixels[idx];
-                            let g = pixels[idx + 1];
-                            let bVal = pixels[idx + 2];
-                            let alpha = pixels[idx + 3];
+        const maxWidth = parseInt(paperWidthSelect.value);
+        const threshold = parseInt(thresholdRange.value);
+        const isRotated = currentRotation === 90 || currentRotation === 270;
 
-                            let gray = (r * 0.299 + g * 0.587 + bVal * 0.114);
-                            if (alpha > 128 && gray < 128) {
-                                byte |= (1 << (7 - b));
-                            }
+        const srcW = isRotated ? loadedImage.naturalHeight : loadedImage.naturalWidth;
+        const srcH = isRotated ? loadedImage.naturalWidth : loadedImage.naturalHeight;
+
+        const scale = maxWidth / srcW;
+        const width = maxWidth;
+        const height = Math.floor(srcH * scale);
+
+        thermalCanvas.width = width;
+        thermalCanvas.height = height;
+        const ctx = thermalCanvas.getContext('2d');
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.save();
+        ctx.translate(width / 2, height / 2);
+        ctx.rotate((currentRotation * Math.PI) / 180);
+
+        const drawW = isRotated ? height : width;
+        const drawH = isRotated ? width : height;
+        ctx.drawImage(loadedImage, -drawW / 2, -drawH / 2, drawW, drawH);
+        ctx.restore();
+
+        const imgData = ctx.getImageData(0, 0, width, height);
+        const pixels = imgData.data;
+
+        const bytesW = Math.ceil(width / 8);
+        const bytesH = height;
+
+        let rasterBuffer = [
+            0x1D, 0x76, 0x30, 0x00,
+            bytesW & 0xFF, (bytesW >> 8) & 0xFF,
+            bytesH & 0xFF, (bytesH >> 8) & 0xFF
+        ];
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < bytesW; x++) {
+                let byte = 0;
+                for (let b = 0; b < 8; b++) {
+                    const pxX = (x * 8) + b;
+                    if (pxX < width) {
+                        const idx = (y * width + pxX) * 4;
+                        const gray = pixels[idx] * 0.299 + pixels[idx + 1] * 0.587 + pixels[idx + 2] * 0.114;
+                        const isBlack = gray < threshold;
+
+                        if (isBlack) {
+                            byte |= (1 << (7 - b));
+                            pixels[idx] = pixels[idx + 1] = pixels[idx + 2] = 0;
+                        } else {
+                            pixels[idx] = pixels[idx + 1] = pixels[idx + 2] = 255;
                         }
-                    }
-                    rasterBuffer.push(byte);
-                }
-            }
-
-            // Espacio y corte al final
-            rasterBuffer.push(0x1B, 0x64, 0x04); // Avanzar líneas
-            imageDataBytes = new Uint8Array(rasterBuffer);
-        }
-
-        // Manejo de conexión Bluetooth
-        async function conectarImpresora() {
-            if (!bluetoothDevice || !bluetoothDevice.gatt.connected) {
-                statusText.innerText = "Buscando impresora...";
-                bluetoothDevice = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true,
-                    optionalServices: [SERVICE_UUID]
-                });
-
-                bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
-
-                const server = await bluetoothDevice.gatt.connect();
-                const service = await server.getPrimaryService(SERVICE_UUID);
-                bluetoothCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
-            }
-        }
-
-        function onDisconnected() {
-            actualizarEstadoUI(false, "Desconectada - Reconectando...");
-            reintentarConexion(3);
-        }
-
-        async function reintentarConexion(intentos) {
-            if (intentos <= 0) {
-                actualizarEstadoUI(false, "Desconectada");
-                bluetoothDevice = null;
-                return;
-            }
-            await new Promise(resolve => setTimeout(resolve, 3000));
-            try {
-                if (bluetoothDevice) {
-                    await bluetoothDevice.gatt.connect();
-                    actualizarEstadoUI(true, `Conectado a ${bluetoothDevice.name || 'Impresora'}`);
-                }
-            } catch (e) {
-                reintentarConexion(intentos - 1);
-            }
-        }
-
-        // Botón principal de impresión
-        printBtn.addEventListener('click', async () => {
-            try {
-                await conectarImpresora();
-                actualizarEstadoUI(true, `Conectado a ${bluetoothDevice.name || 'Impresora'}`);
-
-                if (!imageDataBytes) {
-                    alert("Por favor selecciona una imagen primero.");
-                    return;
-                }
-
-                statusText.innerText = "Imprimiendo imagen...";
-
-                // Envío optimizado con chunks pequeños y delay para no saturar
-                const CHUNK_SIZE = 128;
-                const DELAY_MS = 15;
-
-                for (let i = 0; i < imageDataBytes.length; i += CHUNK_SIZE) {
-                    let chunk = imageDataBytes.slice(i, i + CHUNK_SIZE);
-                    if (bluetoothCharacteristic.writeValueWithoutResponse) {
-                        await bluetoothCharacteristic.writeValueWithoutResponse(chunk);
-                    } else {
-                        await bluetoothCharacteristic.writeValue(chunk);
-                    }
-                    if (DELAY_MS > 0) {
-                        await new Promise(resolve => setTimeout(resolve, DELAY_MS));
+                        pixels[idx + 3] = 255;
                     }
                 }
-
-                statusText.innerText = "¡Impresión exitosa!";
-            } catch (error) {
-                console.error(error);
-                actualizarEstadoUI(false, "Error de impresión");
-                alert("Error: " + error.message);
+                rasterBuffer.push(byte);
             }
-        });
-    </script>
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+        imageRasterBytes = new Uint8Array(rasterBuffer);
+    }
+
+    function construirBufferImpresion() {
+        let buffer = [];
+
+        buffer.push(0x1B, 0x40);
+        buffer.push(0x1B, 0x74, 0x13);
+
+        if (fontSizeSelect.value === 'tall') {
+            buffer.push(0x1D, 0x21, 0x01);
+        } else {
+            buffer.push(0x1D, 0x21, 0x00);
+        }
+
+        const texto = ticketTextarea.value.replace(/\r\n/g, '\n').trim();
+        if (texto.length > 0) {
+            buffer.push(...encodeCP858(texto + '\n\n'));
+        }
+
+        if (imageRasterBytes) {
+            buffer.push(0x1B, 0x61, 0x01);
+            buffer.push(...imageRasterBytes);
+            buffer.push(0x1B, 0x61, 0x00);
+        }
+
+        buffer.push(0x1B, 0x64, 0x04);
+        if (autoCutCheckbox.checked) {
+            buffer.push(0x1D, 0x56, 0x00);
+        }
+
+        return new Uint8Array(buffer);
+    }
+
+    async function inicializarGATT(device) {
+        const server = await device.gatt.connect();
+        const service = await server.getPrimaryService(SERVICE_UUID);
+        bluetoothCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+    }
+
+    async function conectarImpresora() {
+        if (!bluetoothDevice) {
+            statusText.innerText = "Buscando impresora...";
+            bluetoothDevice = await navigator.bluetooth.requestDevice({
+                acceptAllDevices: true,
+                optionalServices: [SERVICE_UUID]
+            });
+            bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
+        }
+        if (!bluetoothDevice.gatt.connected || !bluetoothCharacteristic) {
+            await inicializarGATT(bluetoothDevice);
+        }
+    }
+
+    function onDisconnected() {
+        bluetoothCharacteristic = null;
+        actualizarEstadoUI(false, "Desconectada - Reconectando...");
+        reintentarConexion(3);
+    }
+
+    async function reintentarConexion(intentos) {
+        if (intentos <= 0 || !bluetoothDevice) {
+            actualizarEstadoUI(false, "Desconectada");
+            return;
+        }
+        await new Promise(r => setTimeout(r, 2500));
+        try {
+            await inicializarGATT(bluetoothDevice);
+            actualizarEstadoUI(true, `Conectada (${bluetoothDevice.name || 'Impresora'})`);
+        } catch (e) {
+            reintentarConexion(intentos - 1);
+        }
+    }
+
+    printBtn.addEventListener('click', async () => {
+        if (!ticketTextarea.value.trim() && !imageRasterBytes) {
+            alert("Añade texto o selecciona una imagen antes de imprimir.");
+            return;
+        }
+
+        printBtn.disabled = true;
+        try {
+            await conectarImpresora();
+            actualizarEstadoUI(true, `Conectada (${bluetoothDevice.name || 'Impresora'})`);
+            statusText.innerText = "Enviando datos...";
+
+            const bytesTotales = construirBufferImpresion();
+            const CHUNK_SIZE = 128;
+            const DELAY_MS = 18;
+
+            for (let i = 0; i < bytesTotales.length; i += CHUNK_SIZE) {
+                const chunk = bytesTotales.slice(i, i + CHUNK_SIZE);
+                if (bluetoothCharacteristic.writeValueWithoutResponse) {
+                    await bluetoothCharacteristic.writeValueWithoutResponse(chunk);
+                } else {
+                    await bluetoothCharacteristic.writeValue(chunk);
+                }
+                await new Promise(r => setTimeout(r, DELAY_MS));
+            }
+
+            actualizarEstadoUI(true, "¡Impresión completada!");
+        } catch (error) {
+            console.error(error);
+            actualizarEstadoUI(false, "Error de conexión");
+            alert("Error: " + error.message);
+        } finally {
+            printBtn.disabled = false;
+        }
+    });
+</script>
 </body>
 </html>
