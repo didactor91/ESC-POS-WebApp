@@ -31,6 +31,16 @@ python3 -m http.server 8000
 
 Open <http://localhost:8000> in a compatible browser. To access the app from another device, host it on an HTTPS server and open that URL on the device; Web Bluetooth requires a secure context.
 
+## Tests
+
+The project uses Node.js built-in test runner. From the project directory, run:
+
+```bash
+npm test
+```
+
+The suite checks CP858 text encoding, generated ESC/POS buffers, and matching English/Spanish translation keys.
+
 ## Usage
 
 1. Select the paper width and print options.
@@ -48,15 +58,19 @@ Templates are stored in the browser's local storage on the current device. They 
 .
 ├── index.html
 ├── sw.js
+├── package.json
 ├── css/
 │   └── styles.css
-└── js/
+├── js/
     ├── app.js
     ├── bluetoothService.js
     ├── escposBuilder.js
     ├── i18n.js
     ├── printerProfiles.js
     └── imageProcessor.js
+└── test/
+    ├── escposBuilder.test.js
+    └── i18n.test.js
 ```
 
 - `app.js`: UI, preferences, and print workflow.
