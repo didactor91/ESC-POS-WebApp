@@ -11,6 +11,7 @@ Web demo for preparing and printing tickets on ESC/POS thermal printers over Blu
 - Choose normal or double-height text and enable automatic paper cutting.
 - Connect to the printer from the browser and send ESC/POS data.
 - Switch between English and Spanish, and light and dark themes.
+- Cache core application assets for offline reopening after the initial visit.
 
 ## Requirements
 
@@ -43,6 +44,7 @@ Templates are stored in the browser's local storage on the current device. They 
 ```text
 .
 ├── index.html
+├── sw.js
 ├── css/
 │   └── styles.css
 └── js/
@@ -58,6 +60,7 @@ Templates are stored in the browser's local storage on the current device. They 
 - `escposBuilder.js`: text encoding and ESC/POS buffer construction.
 - `imageProcessor.js`: conversion of images to monochrome raster data.
 - `i18n.js`: English and Spanish translations.
+- `sw.js`: service worker cache for offline reopening of the application.
 
 ## Troubleshooting
 
@@ -65,3 +68,4 @@ Templates are stored in the browser's local storage on the current device. They 
 - **The printer does not appear or the connection fails:** make sure it is powered on, available for pairing, and implements the GATT UUIDs listed above. ESC/POS support alone does not guarantee compatibility.
 - **The printout is cropped or misaligned:** check the configured paper width and the printer's ESC/POS capabilities.
 - **On iPhone or iPad:** Safari does not support Web Bluetooth; the app displays a notice with information about an alternative.
+- **The print dialog is cancelled or the connection drops:** the app reports a localized cancellation or connection-loss status instead of continuing the print.

@@ -12,19 +12,27 @@ export class BluetoothService {
             throw new Error("WEB_BLUETOOTH_NOT_SUPPORTED");
         }
 
-        if (!this.device) {
-            this.device = await navigator.bluetooth.requestDevice({
-                acceptAllDevices: true,
-                optionalServices: [SERVICE_UUID]
-            });
-            this.device.addEventListener('gattserverdisconnected', () => {
-                this.characteristic = null;
-                if (onDisconnectCallback) onDisconnectCallback();
-            });
-        }
+        try {
+            if (!this.device) {
+                this.device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: [SERVICE_UUID]
+                });
+                this.device.addEventListener('gattserverdisconnected', () => {
+                    this.characteristic = null;
+                    if (onDisconnectCallback) onDisconnectCallback();
+                });
+            }
 
-        if (!this.device.gatt.connected || !this.characteristic) {
-            await this._initGATT();
+            if (!this.device.gatt.connected || !this.characteristic) {
+                await this._initGATT();
+            }
+        } catch (error) {
+            // Si el usuario cancela el selector de dispositivos
+            if (error.name === 'NotFoundError') {
+                throw new Error("USER_CANCELLED_BLUETOOTH");
+            }
+            throw error;
         }
     }
 
@@ -41,6 +49,11 @@ export class BluetoothService {
 
         for (let i = 0; i < total; i += CHUNK_SIZE) {
             const chunk = bytes.slice(i, i + CHUNK_SIZE);
+
+            if (!this.characteristic) {
+                throw new Error("LOST_CONNECTION_DURING_PRINT");
+            }
+
             if (this.characteristic.writeValueWithoutResponse) {
                 await this.characteristic.writeValueWithoutResponse(chunk);
             } else {
@@ -53,18 +66,6 @@ export class BluetoothService {
             }
 
             await new Promise(r => setTimeout(r, DELAY_MS));
-        }
-    }
-
-    async reconnect(attemptsLeft, onReconnectSuccess) {
-        if (attemptsLeft <= 0 || !this.device) return false;
-        await new Promise(r => setTimeout(r, 2500));
-        try {
-            await this._initGATT();
-            if (onReconnectSuccess) onReconnectSuccess();
-            return true;
-        } catch (error) {
-            return this.reconnect(attemptsLeft - 1, onReconnectSuccess);
         }
     }
 }

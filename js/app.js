@@ -229,7 +229,15 @@ printButton.addEventListener('click', async () => {
     } catch (error) {
         console.error(error);
         updateStatus(false, "statusError");
-        alert(translations[currentLang].errorPrefix + (error.message === "WEB_BLUETOOTH_NOT_SUPPORTED" ? translations[currentLang].alertNoBluetooth : error.message));
+        let errorMessage = error.message;
+        if (error.message === "WEB_BLUETOOTH_NOT_SUPPORTED") {
+            errorMessage = translations[currentLang].alertNoBluetooth;
+        } else if (error.message === "USER_CANCELLED_BLUETOOTH") {
+            errorMessage = translations[currentLang].userCancelled;
+        } else if (error.message === "LOST_CONNECTION_DURING_PRINT") {
+            errorMessage = translations[currentLang].lostConnection;
+        }
+        alert(translations[currentLang].errorPrefix + errorMessage);
         printButton.innerHTML = `🖨️ <span data-i18n="printBtnText">${translations[currentLang].printBtnText}</span>`;
     } finally {
         printButton.disabled = false;
