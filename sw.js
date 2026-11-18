@@ -7,7 +7,8 @@ const ASSETS_TO_CACHE = [
     './js/i18n.js',
     './js/bluetoothService.js',
     './js/escposBuilder.js',
-    './js/imageProcessor.js'
+    './js/imageProcessor.js',
+    './js/printerProfiles.js'
 ];
 
 self.addEventListener('install', (event) => {

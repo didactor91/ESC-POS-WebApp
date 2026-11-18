@@ -59,8 +59,10 @@ const statusText = document.getElementById('statusText');
 const uploadInput = document.getElementById('upload');
 const imageControls = document.getElementById('imageControls');
 const printButton = document.getElementById('printBtn');
+const retryButton = document.getElementById('retryBtn');
 const paperWidthSelect = document.getElementById('paperWidth');
 const fontSizeSelect = document.getElementById('fontSize');
+const printerProfileSelect = document.getElementById('printerProfile');
 const autoCutCheckbox = document.getElementById('autoCut');
 const ticketTextarea = document.getElementById('ticketText');
 const rotateButton = document.getElementById('rotateBtn');
@@ -88,12 +90,11 @@ function updateStatus(isConnected, messageKey) {
     statusText.textContent = translations[currentLang][messageKey] || messageKey;
 }
 
-// --- Local Templates Management (localStorage) ---
+// --- Local Templates Management ---
 function getSavedTemplates() {
     try {
         return JSON.parse(localStorage.getItem('escpos-templates')) || {};
-    } catch (error) {
-        console.error('Failed to parse saved templates from local storage.', error);
+    } catch {
         return {};
     }
 }
@@ -127,7 +128,7 @@ function renderTemplatesList() {
 saveTemplateBtn.addEventListener('click', () => {
     const text = ticketTextarea.value.trim();
     if (!text) return alert(translations[currentLang].alertNoContent);
-    const name = prompt(translations[currentLang].promptTemplateName)?.trim();
+    const name = prompt(translations[currentLang].promptTemplateName);
     if (!name) return;
 
     const templates = getSavedTemplates();
@@ -136,9 +137,8 @@ saveTemplateBtn.addEventListener('click', () => {
     renderTemplatesList();
 });
 
-clearTextBtn.addEventListener('click', () => {
-    ticketTextarea.value = '';
-});
+clearTextBtn.addEventListener('click', () => { ticketTextarea.value = ''; });
+renderTemplatesList();
 
 // --- Image Processing ---
 function updatePreviewCanvas() {
@@ -195,35 +195,24 @@ paperWidthSelect.addEventListener('change', () => {
     if (loadedImage) updatePreviewCanvas();
 });
 
-// --- Print Flow with Dynamic Progress ---
-printButton.addEventListener('click', async () => {
-    const textContent = ticketTextarea.value.trim();
-    if (!textContent && !rasterBytesResult) {
-        alert(translations[currentLang].alertNoContent);
-        return;
-    }
-
+// --- Print Execution Flow ---
+async function executePrint(bufferTask) {
     printButton.disabled = true;
+    retryButton.style.display = 'none';
     try {
         updateStatus(false, "statusConnecting");
         await bluetooth.connect(() => {
             updateStatus(false, "statusDisconnected");
+            retryButton.style.display = 'block';
         });
 
         updateStatus(true, "statusConnected");
-
-        const printBuffer = buildPrintBuffer({
-            text: textContent,
-            imageBytes: rasterBytesResult,
-            paperWidth: parseInt(paperWidthSelect.value),
-            fontSize: fontSizeSelect.value,
-            autoCut: autoCutCheckbox.checked
-        });
-
         updateStatus(true, "statusPrinting");
-        await bluetooth.sendData(printBuffer, (percent) => {
+
+        await bluetooth.sendData(bufferTask, (percent) => {
             printButton.textContent = translations[currentLang].sendingProgress.replace('{percent}', percent);
         });
+
         updateStatus(true, "statusSuccess");
         printButton.innerHTML = `🖨️ <span data-i18n="printBtnText">${translations[currentLang].printBtnText}</span>`;
     } catch (error) {
@@ -239,7 +228,34 @@ printButton.addEventListener('click', async () => {
         }
         alert(translations[currentLang].errorPrefix + errorMessage);
         printButton.innerHTML = `🖨️ <span data-i18n="printBtnText">${translations[currentLang].printBtnText}</span>`;
+        if (bluetooth.lastJobBytes) {
+            retryButton.style.display = 'block'; // Mostrar botón de reintento si falló a mitad
+        }
     } finally {
         printButton.disabled = false;
     }
+}
+
+printButton.addEventListener('click', async () => {
+    const textContent = ticketTextarea.value.trim();
+    if (!textContent && !rasterBytesResult) {
+        alert(translations[currentLang].alertNoContent);
+        return;
+    }
+
+    const printBuffer = buildPrintBuffer({
+        text: textContent,
+        imageBytes: rasterBytesResult,
+        paperWidth: parseInt(paperWidthSelect.value),
+        fontSize: fontSizeSelect.value,
+        autoCut: autoCutCheckbox.checked,
+        profileKey: printerProfileSelect.value
+    });
+
+    await executePrint(printBuffer);
+});
+
+retryButton.addEventListener('click', async () => {
+    retryButton.style.display = 'none';
+    await executePrint(bluetooth.lastJobBytes);
 });

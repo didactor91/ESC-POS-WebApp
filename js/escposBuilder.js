@@ -1,3 +1,5 @@
+import { PRINTER_PROFILES } from './printerProfiles.js';
+
 export function encodeCP858(str) {
     const map = {
         'á': 0xA0, 'é': 0x82, 'í': 0xA1, 'ó': 0xA2, 'ú': 0xA3,
@@ -18,12 +20,13 @@ export function encodeCP858(str) {
     return bytes;
 }
 
-export function buildPrintBuffer({ text, imageBytes, paperWidth, fontSize, autoCut }) {
+export function buildPrintBuffer({ text, imageBytes, paperWidth, fontSize, autoCut, profileKey }) {
+    const profile = PRINTER_PROFILES[profileKey] || PRINTER_PROFILES.generic;
     let buffer = [];
 
-    // Initialize printer & Code Page 858
-    buffer.push(0x1B, 0x40);
-    buffer.push(0x1B, 0x74, 0x13);
+    // Initialize & Code Page
+    buffer.push(...profile.init);
+    buffer.push(...profile.codePage);
 
     // Font size
     if (fontSize === 'tall') {
@@ -40,15 +43,15 @@ export function buildPrintBuffer({ text, imageBytes, paperWidth, fontSize, autoC
 
     // Image raster payload
     if (imageBytes) {
-        buffer.push(0x1B, 0x61, 0x01); // Center align
+        buffer.push(0x1B, 0x61, 0x01); // Center
         buffer.push(...imageBytes);
-        buffer.push(0x1B, 0x61, 0x00); // Left align
+        buffer.push(0x1B, 0x61, 0x00); // Left
     }
 
-    // Feed & Cut
-    buffer.push(0x1B, 0x64, 0x04);
+    // Feed & Cut based on profile
+    buffer.push(...profile.feed);
     if (autoCut) {
-        buffer.push(0x1D, 0x56, 0x00);
+        buffer.push(...profile.cut);
     }
 
     return new Uint8Array(buffer);

@@ -52,6 +52,14 @@
                 </select>
             </div>
         </div>
+        <div class="input-group" style="margin-top: 10px;">
+            <label for="printerProfile" data-i18n="printerProfileLabel">Printer Profile / Brand</label>
+            <select id="printerProfile">
+                <option value="generic" data-i18n="profileGeneric" selected>Generic ESC/POS (Standard)</option>
+                <option value="epson" data-i18n="profileEpson">Epson / TM Series</option>
+                <option value="xprinter" data-i18n="profileXprinter">Xprinter / Goojprt (POS)</option>
+            </select>
+        </div>
         <label class="checkbox-row">
             <input type="checkbox" id="autoCut" checked>
             <span data-i18n="autoCutLabel">Auto-cut paper on finish</span>
@@ -91,6 +99,7 @@
 
     <div class="action-container">
         <button id="printBtn" class="btn-print">🖨️ <span data-i18n="printBtnText">Connect & Print</span></button>
+        <button id="retryBtn" class="btn-print" style="margin-top: 10px; background: #d97706; display: none;" data-i18n="retryBtnText">🔄 Retry Last Print</button>
     </div>
 </div>
 

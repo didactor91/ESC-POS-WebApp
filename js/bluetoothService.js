@@ -5,6 +5,7 @@ export class BluetoothService {
     constructor() {
         this.device = null;
         this.characteristic = null;
+        this.lastJobBytes = null;
     }
 
     async connect(onDisconnectCallback) {
@@ -28,7 +29,6 @@ export class BluetoothService {
                 await this._initGATT();
             }
         } catch (error) {
-            // Si el usuario cancela el selector de dispositivos
             if (error.name === 'NotFoundError') {
                 throw new Error("USER_CANCELLED_BLUETOOTH");
             }
@@ -43,6 +43,7 @@ export class BluetoothService {
     }
 
     async sendData(bytes, onProgress) {
+        this.lastJobBytes = bytes; // Guardar en memoria para posibles reintentos
         const CHUNK_SIZE = 256;
         const DELAY_MS = 10;
         const total = bytes.length;
@@ -67,5 +68,12 @@ export class BluetoothService {
 
             await new Promise(r => setTimeout(r, DELAY_MS));
         }
+    }
+
+    async retryLastJob(onProgress) {
+        if (!this.lastJobBytes) {
+            throw new Error("NO_PENDING_JOB");
+        }
+        return this.sendData(this.lastJobBytes, onProgress);
     }
 }

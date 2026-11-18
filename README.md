@@ -9,6 +9,8 @@ Web demo for preparing and printing tickets on ESC/POS thermal printers over Blu
 - Preview images in black and white and adjust their threshold.
 - Rotate images and fit them to 58 mm or 80 mm paper.
 - Choose normal or double-height text and enable automatic paper cutting.
+- Select a generic, Epson, or Xprinter printer profile with profile-specific initialization and cut commands.
+- Retry the last print job after a connection interruption.
 - Connect to the printer from the browser and send ESC/POS data.
 - Switch between English and Spanish, and light and dark themes.
 - Cache core application assets for offline reopening after the initial visit.
@@ -34,7 +36,8 @@ Open <http://localhost:8000> in a compatible browser. To access the app from ano
 1. Select the paper width and print options.
 2. Enter text, select an image, or use both. Save reusable text with **Save Template**; click a saved template to load it, or double-click it to delete it. Use **Clear** to empty the text field.
 3. Adjust the image rotation and threshold as needed.
-4. Click **Connect & Print** and choose the printer in the browser dialog.
+4. Choose a printer profile and paper width, then click **Connect & Print** and select the printer in the browser dialog.
+5. If transmission fails or the printer disconnects, use **Retry Last Print** to resend the buffered job.
 
 The printer is selected and the print job is sent when you click the button, using the browser's Web Bluetooth dialog.
 Templates are stored in the browser's local storage on the current device. They are not uploaded or synchronized.
@@ -52,6 +55,7 @@ Templates are stored in the browser's local storage on the current device. They 
     ├── bluetoothService.js
     ├── escposBuilder.js
     ├── i18n.js
+    ├── printerProfiles.js
     └── imageProcessor.js
 ```
 
@@ -60,6 +64,7 @@ Templates are stored in the browser's local storage on the current device. They 
 - `escposBuilder.js`: text encoding and ESC/POS buffer construction.
 - `imageProcessor.js`: conversion of images to monochrome raster data.
 - `i18n.js`: English and Spanish translations.
+- `printerProfiles.js`: printer-specific ESC/POS initialization, code page, feed, and cut commands.
 - `sw.js`: service worker cache for offline reopening of the application.
 
 ## Troubleshooting
