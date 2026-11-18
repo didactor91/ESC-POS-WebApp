@@ -1,4 +1,5 @@
 import { translations } from './i18n.js';
+import { BluetoothDiagnostics } from './bluetoothDiagnostics.js';
 import { BluetoothService } from './bluetoothService.js';
 import { buildPrintBuffer } from './escposBuilder.js';
 import { processImageToRaster } from './imageProcessor.js';
@@ -15,7 +16,9 @@ import { processImageToRaster } from './imageProcessor.js';
 })();
 
 let currentLang = localStorage.getItem('escpos-lang') || 'es';
-const bluetooth = new BluetoothService();
+const bluetoothDiagnostics = new BluetoothDiagnostics();
+const bluetooth = new BluetoothService(bluetoothDiagnostics);
+const bluetoothNotice = document.getElementById('bluetoothNotice');
 
 function applyTranslations(lang) {
     currentLang = lang;
@@ -29,6 +32,24 @@ function applyTranslations(lang) {
     });
     document.getElementById('ticketText').placeholder = translations[lang].textPlaceholder;
     renderTemplatesList();
+    refreshBluetoothNotice();
+}
+
+async function refreshBluetoothNotice() {
+    try {
+        const status = await bluetoothDiagnostics.getStatus();
+        const messageKey = {
+            available: 'bluetoothCompatibilityNotice',
+            unavailable: 'bluetoothUnavailable',
+            unsupported: 'alertNoBluetooth',
+            insecure: 'bluetoothInsecureContext',
+            unknown: 'bluetoothCompatibilityNotice'
+        }[status];
+        bluetoothNotice.textContent = translations[currentLang][messageKey];
+    } catch (error) {
+        console.error('Bluetooth availability check failed:', error);
+        bluetoothNotice.textContent = translations[currentLang].bluetoothStatusCheckFailed;
+    }
 }
 
 // Theme toggle
@@ -76,6 +97,9 @@ const saveTemplateBtn = document.getElementById('saveTemplateBtn');
 const clearTextBtn = document.getElementById('clearTextBtn');
 
 applyTranslations(currentLang);
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refreshBluetoothNotice();
+});
 
 document.getElementById('langToggle').addEventListener('click', () => {
     applyTranslations(currentLang === 'es' ? 'en' : 'es');
@@ -221,8 +245,14 @@ async function executePrint(bufferTask) {
         let errorMessage = error.message;
         if (error.message === "WEB_BLUETOOTH_NOT_SUPPORTED") {
             errorMessage = translations[currentLang].alertNoBluetooth;
+        } else if (error.message === "BLUETOOTH_INSECURE_CONTEXT") {
+            errorMessage = translations[currentLang].bluetoothInsecureContext;
+        } else if (error.message === "BLUETOOTH_PERMISSION_DENIED") {
+            errorMessage = translations[currentLang].bluetoothPermissionDenied;
         } else if (error.message === "USER_CANCELLED_BLUETOOTH") {
             errorMessage = translations[currentLang].userCancelled;
+        } else if (error.message === "BLUETOOTH_PRINTER_NOT_COMPATIBLE") {
+            errorMessage = translations[currentLang].printerNotCompatible;
         } else if (error.message === "LOST_CONNECTION_DURING_PRINT") {
             errorMessage = translations[currentLang].lostConnection;
         }

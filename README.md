@@ -18,7 +18,9 @@ Web demo for preparing and printing tickets on ESC/POS thermal printers over Blu
 ## Requirements
 
 - A browser that supports **Web Bluetooth** and a secure context (`localhost` or HTTPS). Support depends on the browser and operating system; Safari on iOS does not natively support Web Bluetooth.
+- Web Bluetooth permissions are managed by the browser and requested when the user selects a printer. A webpage cannot turn on Bluetooth or grant Android permissions itself.
 - A BLE thermal printer that exposes the GATT service `000018f0-0000-1000-8000-00805f9b34fb` and writable characteristic `00002af1-0000-1000-8000-00805f9b34fb`, and accepts the ESC/POS commands sent by the demo. Not all Bluetooth printers are compatible.
+- Classic Bluetooth (SPP) printers are not accessible through this web app. Supporting them requires an Android-native app or native bridge.
 - Browser permission to select and connect to Bluetooth devices.
 
 ## Run locally
@@ -39,7 +41,7 @@ The project uses Node.js built-in test runner. From the project directory, run:
 npm test
 ```
 
-The suite checks CP858 text encoding, generated ESC/POS buffers, and matching English/Spanish translation keys.
+The suite checks CP858 text encoding, generated ESC/POS buffers, Bluetooth availability diagnostics, connection error handling, and matching English/Spanish translation keys.
 
 ## Usage
 
@@ -63,17 +65,21 @@ Templates are stored in the browser's local storage on the current device. They 
 │   └── styles.css
 ├── js/
     ├── app.js
+    ├── bluetoothDiagnostics.js
     ├── bluetoothService.js
     ├── escposBuilder.js
     ├── i18n.js
     ├── printerProfiles.js
     └── imageProcessor.js
 └── test/
+    ├── bluetoothDiagnostics.test.js
+    ├── bluetoothService.test.js
     ├── escposBuilder.test.js
     └── i18n.test.js
 ```
 
 - `app.js`: UI, preferences, and print workflow.
+- `bluetoothDiagnostics.js`: secure-context, Web Bluetooth support, and adapter-availability checks. Android permissions remain managed by the browser.
 - `bluetoothService.js`: GATT connection and chunked data transfer.
 - `escposBuilder.js`: text encoding and ESC/POS buffer construction.
 - `imageProcessor.js`: conversion of images to monochrome raster data.
@@ -87,4 +93,5 @@ Templates are stored in the browser's local storage on the current device. They 
 - **The printer does not appear or the connection fails:** make sure it is powered on, available for pairing, and implements the GATT UUIDs listed above. ESC/POS support alone does not guarantee compatibility.
 - **The printout is cropped or misaligned:** check the configured paper width and the printer's ESC/POS capabilities.
 - **On iPhone or iPad:** Safari does not support Web Bluetooth; the app displays a notice with information about an alternative.
-- **The print dialog is cancelled or the connection drops:** the app reports a localized cancellation or connection-loss status instead of continuing the print.
+- **The printer does not appear on Android:** this app connects to compatible BLE printers, not classic Bluetooth (SPP) printers. Make sure Bluetooth is enabled, grant the browser nearby-device access (and location access on older Android versions), and use a supported browser from an HTTPS page.
+- **The print dialog is cancelled or the connection drops:** select a device in the browser dialog. If a selected printer is reported as incompatible, it does not expose the BLE service and writable characteristic this app requires.

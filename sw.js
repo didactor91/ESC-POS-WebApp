@@ -1,10 +1,11 @@
-const CACHE_NAME = 'escpos-studio-v3';
+const CACHE_NAME = 'escpos-studio-v4';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './css/styles.css',
     './js/app.js',
     './js/i18n.js',
+    './js/bluetoothDiagnostics.js',
     './js/bluetoothService.js',
     './js/escposBuilder.js',
     './js/imageProcessor.js',

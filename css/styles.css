@@ -142,6 +142,10 @@ select:focus, textarea:focus { outline: none; border-color: var(--primary); back
     color: var(--warn-text); padding: 12px; border-radius: 12px; font-size: 12.5px; margin-bottom: 14px; line-height: 1.4;
 }
 .ios-banner strong { font-weight: 700; }
+.bluetooth-banner {
+    background: var(--warn-bg); border: 1px solid var(--warn-border); color: var(--warn-text);
+    padding: 12px; border-radius: 12px; font-size: 12.5px; margin-bottom: 14px; line-height: 1.4;
+}
 /* Nuevos estilos para Plantillas Locales */
 .templates-bar {
     display: flex;
