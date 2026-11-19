@@ -62,3 +62,40 @@ test('connect should report an incompatible printer when its BLE service is miss
         await assert.rejects(service.connect(), { message: 'BLUETOOTH_PRINTER_NOT_COMPATIBLE' });
     });
 });
+
+test('sendData preserves bytes across BLE-safe writes without response', async () => {
+    const service = new BluetoothService();
+    const writes = [];
+    service.characteristic = {
+        properties: { writeWithoutResponse: true },
+        async writeValueWithoutResponse(chunk) {
+            writes.push([...chunk]);
+        }
+    };
+    const bytes = Uint8Array.from({ length: 45 }, (_, index) => index);
+    const progress = [];
+
+    await service.sendData(bytes, percent => progress.push(percent));
+
+    assert.deepStrictEqual(writes.flat(), [...bytes]);
+    assert.ok(writes.every(chunk => chunk.length <= 20));
+    assert.strictEqual(progress.at(-1), 100);
+});
+
+test('sendData uses acknowledged writes when the characteristic supports them', async () => {
+    const service = new BluetoothService();
+    const writes = [];
+    service.characteristic = {
+        properties: { write: true, writeWithoutResponse: true },
+        async writeValueWithResponse(chunk) {
+            writes.push([...chunk]);
+        },
+        async writeValueWithoutResponse() {
+            assert.fail('Should use acknowledged writes when supported');
+        }
+    };
+
+    await service.sendData(Uint8Array.from([1, 2, 3]));
+
+    assert.deepStrictEqual(writes, [[1, 2, 3]]);
+});

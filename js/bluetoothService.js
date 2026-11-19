@@ -59,7 +59,7 @@ export class BluetoothService {
 
     async sendData(bytes, onProgress) {
         this.lastJobBytes = bytes; // Guardar en memoria para posibles reintentos
-        const CHUNK_SIZE = 256;
+        const CHUNK_SIZE = 20;
         const DELAY_MS = 10;
         const total = bytes.length;
 
@@ -70,10 +70,21 @@ export class BluetoothService {
                 throw new Error("LOST_CONNECTION_DURING_PRINT");
             }
 
-            if (this.characteristic.writeValueWithoutResponse) {
+            let needsDelay = false;
+            if (this.characteristic.properties?.write
+                && this.characteristic.writeValueWithResponse) {
+                await this.characteristic.writeValueWithResponse(chunk);
+            } else if (this.characteristic.properties?.writeWithoutResponse
+                && this.characteristic.writeValueWithoutResponse) {
                 await this.characteristic.writeValueWithoutResponse(chunk);
-            } else {
+                needsDelay = true;
+            } else if (this.characteristic.writeValue) {
                 await this.characteristic.writeValue(chunk);
+            } else if (this.characteristic.writeValueWithoutResponse) {
+                await this.characteristic.writeValueWithoutResponse(chunk);
+                needsDelay = true;
+            } else {
+                throw new Error("BLUETOOTH_CHARACTERISTIC_NOT_WRITABLE");
             }
 
             if (onProgress) {
@@ -81,7 +92,9 @@ export class BluetoothService {
                 onProgress(percent);
             }
 
-            await new Promise(r => setTimeout(r, DELAY_MS));
+            if (needsDelay) {
+                await new Promise(r => setTimeout(r, DELAY_MS));
+            }
         }
     }
 

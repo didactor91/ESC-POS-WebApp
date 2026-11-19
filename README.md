@@ -85,7 +85,7 @@ Templates are stored in the browser's local storage on the current device. They 
 
 - `app.js`: UI, preferences, and print workflow.
 - `bluetoothDiagnostics.js`: secure-context, Web Bluetooth support, and adapter-availability checks. Android permissions remain managed by the browser.
-- `bluetoothService.js`: GATT connection and chunked data transfer.
+- `bluetoothService.js`: GATT connection and ordered 20-byte writes, using acknowledgements when supported.
 - `escposBuilder.js`: text encoding and ESC/POS buffer construction.
 - `imageProcessor.js`: conversion of images and text to monochrome raster data.
 - `i18n.js`: English and Spanish translations.

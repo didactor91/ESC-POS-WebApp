@@ -33,6 +33,31 @@ test('buildPrintBuffer uses raster text instead of encoding unsupported characte
     assert.strictEqual(buffer.includes(0x3F), false);
 });
 
+test('buildPrintBuffer forwards image raster bytes unchanged', () => {
+    const imageBytes = Uint8Array.from([
+        0x1D, 0x76, 0x30, 0x00,
+        0x01, 0x00, 0x02, 0x00,
+        0x81, 0x10
+    ]);
+    const buffer = buildPrintBuffer({
+        text: '',
+        imageBytes,
+        paperWidth: 384,
+        fontSize: 'normal',
+        autoCut: false,
+        profileKey: 'generic'
+    });
+    const alignCenterIndex = buffer.findIndex((byte, index) =>
+        byte === 0x1B && buffer[index + 1] === 0x61 && buffer[index + 2] === 0x01
+    );
+
+    assert.notStrictEqual(alignCenterIndex, -1);
+    assert.deepStrictEqual(
+        [...buffer.slice(alignCenterIndex + 3, alignCenterIndex + 3 + imageBytes.length)],
+        [...imageBytes]
+    );
+});
+
 test('buildPrintBuffer should generate correct command sequence for generic profile', () => {
     const buffer = buildPrintBuffer({
         text: 'Test',
