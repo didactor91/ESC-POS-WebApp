@@ -1,11 +1,36 @@
 import test from 'node:test';
 import assert from 'node:assert';
-import { encodeCP858, buildPrintBuffer } from '../js/escposBuilder.js';
+import { canEncodeCP858, encodeCP858, buildPrintBuffer } from '../js/escposBuilder.js';
 
 test('encodeCP858 should correctly translate Spanish characters to CP858 byte values', () => {
     // 'á' maps to 0xA0, 'ñ' maps to 0xA4, and standard 'a' maps to 97 (0x61).
     const encoded = encodeCP858('aáñ');
     assert.deepStrictEqual(encoded, [97, 0xA0, 0xA4]);
+});
+
+test('encodeCP858 supports cedilla characters and identifies text needing rasterization', () => {
+    assert.deepStrictEqual(encodeCP858('çÇ'), [0x87, 0x80]);
+    assert.strictEqual(canEncodeCP858('açñ'), true);
+    assert.strictEqual(canEncodeCP858('Hola 😀'), false);
+});
+
+test('buildPrintBuffer uses raster text instead of encoding unsupported characters as question marks', () => {
+    const rasterText = [0x1D, 0x76, 0x30, 0x00, 0x01, 0x00, 0x01, 0x00, 0x80];
+    const buffer = buildPrintBuffer({
+        text: 'Hola 😀',
+        textRasterBytes: rasterText,
+        imageBytes: null,
+        paperWidth: 384,
+        fontSize: 'normal',
+        autoCut: false,
+        profileKey: 'generic'
+    });
+
+    const rasterIndex = buffer.findIndex((byte, index) =>
+        byte === rasterText[0] && rasterText.every((rasterByte, offset) => buffer[index + offset] === rasterByte)
+    );
+    assert.notStrictEqual(rasterIndex, -1);
+    assert.strictEqual(buffer.includes(0x3F), false);
 });
 
 test('buildPrintBuffer should generate correct command sequence for generic profile', () => {

@@ -87,6 +87,34 @@ header h1 { font-size: 15px; font-weight: 700; color: var(--text); }
 }
 .card-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
 
+.input-tabs {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    margin: -2px 0 16px;
+    padding: 4px;
+    border-radius: 12px;
+    background: var(--surface-subtle);
+}
+.input-tab {
+    flex: 1;
+    min-width: max-content;
+    border: 0;
+    border-radius: 9px;
+    padding: 9px 10px;
+    background: transparent;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.input-tab.active { background: var(--surface); color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+.input-tab:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.input-panel[hidden] { display: none; }
+.input-panel > .card-title { margin-top: 2px; }
+.input-hint { margin: -4px 0 10px; color: var(--text-muted); font-size: 12px; line-height: 1.4; }
+
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .input-group { margin-bottom: 10px; }
 .input-group:last-child { margin-bottom: 0; }
@@ -109,6 +137,28 @@ select:focus, textarea:focus { outline: none; border-color: var(--primary); back
     text-align: center; cursor: pointer; background: var(--surface-subtle); transition: all 0.2s;
 }
 .file-dropzone span { font-size: 13px; color: var(--text-muted); font-weight: 600; display: block; }
+.file-dropzone input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.drawing-canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin-bottom: 10px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #fff;
+    touch-action: none;
+    cursor: crosshair;
+}
+.camera-preview {
+    display: block;
+    width: 100%;
+    max-height: 320px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    background: #111827;
+    object-fit: contain;
+}
+.camera-preview[hidden] { display: none; }
 
 .image-controls {
     display: none; background: var(--surface-subtle); padding: 12px;

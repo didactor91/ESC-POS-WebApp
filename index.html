@@ -68,21 +68,49 @@
     </div>
 
     <div class="card">
-        <div class="card-title" data-i18n="textTitle">📝 Free Text / Header & Templates</div>
-        <div id="templatesContainer" class="templates-bar"></div>
-        <textarea id="ticketText"></textarea>
-        <div class="template-actions">
-            <button type="button" id="saveTemplateBtn" class="btn-small" data-i18n="saveTemplateBtn">💾 Save Template</button>
-            <button type="button" id="clearTextBtn" class="btn-small" data-i18n="clearTextBtn">🗑️ Clear</button>
+        <div class="card-title" data-i18n="inputTitle">Ticket content</div>
+        <div class="input-tabs" role="tablist" data-i18n-aria-label="inputTabsLabel" aria-label="Ticket content">
+            <button type="button" id="textTab" class="input-tab active" role="tab" aria-selected="true" aria-controls="textPanel" data-i18n="textTab">📝 Text</button>
+            <button type="button" id="imageTab" class="input-tab" role="tab" aria-selected="false" aria-controls="imagePanel" tabindex="-1" data-i18n="imageTab">🖼️ Image</button>
+            <button type="button" id="drawTab" class="input-tab" role="tab" aria-selected="false" aria-controls="drawPanel" tabindex="-1" data-i18n="drawTab">✍️ Draw</button>
+            <button type="button" id="cameraTab" class="input-tab" role="tab" aria-selected="false" aria-controls="cameraPanel" tabindex="-1" data-i18n="cameraTab">📷 Camera</button>
         </div>
-    </div>
 
-    <div class="card">
-        <div class="card-title" data-i18n="imageTitle">🖼️ Image / Document</div>
-        <div class="file-dropzone" onclick="document.getElementById('upload').click()">
-            <span data-i18n="dropzoneText">📁 Tap to select image</span>
-            <input type="file" id="upload" accept="image/*" style="display:none">
-        </div>
+        <section id="textPanel" class="input-panel" role="tabpanel" aria-labelledby="textTab">
+            <div class="card-title" data-i18n="textTitle">📝 Free Text / Header & Templates</div>
+            <div id="templatesContainer" class="templates-bar"></div>
+            <textarea id="ticketText"></textarea>
+            <div class="template-actions">
+                <button type="button" id="saveTemplateBtn" class="btn-small" data-i18n="saveTemplateBtn">💾 Save Template</button>
+                <button type="button" id="clearTextBtn" class="btn-small" data-i18n="clearTextBtn">🗑️ Clear</button>
+            </div>
+        </section>
+
+        <section id="imagePanel" class="input-panel" role="tabpanel" aria-labelledby="imageTab" hidden>
+            <div class="card-title" data-i18n="imageTitle">🖼️ Image / Document</div>
+            <label class="file-dropzone" for="upload">
+                <span data-i18n="dropzoneText">📁 Tap to select image</span>
+                <input type="file" id="upload" accept="image/*">
+            </label>
+        </section>
+
+        <section id="drawPanel" class="input-panel" role="tabpanel" aria-labelledby="drawTab" hidden>
+            <div class="card-title" data-i18n="drawTitle">✍️ Freehand drawing</div>
+            <p class="input-hint" data-i18n="drawHint">Draw with your finger or mouse. Your drawing prints in black and white.</p>
+            <canvas id="drawingCanvas" class="drawing-canvas" width="768" height="480" data-i18n-aria-label="drawCanvasLabel" aria-label="Drawing area"></canvas>
+            <button type="button" id="clearDrawingBtn" class="btn-small" data-i18n="clearDrawingBtn">🗑️ Clear drawing</button>
+        </section>
+
+        <section id="cameraPanel" class="input-panel" role="tabpanel" aria-labelledby="cameraTab" hidden>
+            <div class="card-title" data-i18n="cameraTitle">📷 Take a photo</div>
+            <p class="input-hint" data-i18n="cameraHint">Camera access requires HTTPS or localhost. The photo is converted to black and white for printing.</p>
+            <video id="cameraPreview" class="camera-preview" autoplay playsinline muted hidden></video>
+            <div class="template-actions">
+                <button type="button" id="startCameraBtn" class="btn-small" data-i18n="cameraStart">Start camera</button>
+                <button type="button" id="capturePhotoBtn" class="btn-small" data-i18n="cameraCapture" disabled>Take photo</button>
+                <button type="button" id="stopCameraBtn" class="btn-small" data-i18n="cameraStop" hidden>Stop camera</button>
+            </div>
+        </section>
 
         <div id="imageControls" class="image-controls">
             <div class="toolbar">
