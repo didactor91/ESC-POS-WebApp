@@ -23,7 +23,7 @@ Web demo for preparing and printing tickets on ESC/POS thermal printers over Blu
 - A browser that supports **Web Bluetooth** and a secure context (`localhost` or HTTPS). Support depends on the browser and operating system; Safari on iOS does not natively support Web Bluetooth.
 - Camera capture requires browser support for `getUserMedia`, a secure context (`localhost` or HTTPS), and permission to use the camera.
 - Web Bluetooth permissions are managed by the browser and requested when the user selects a printer. A webpage cannot turn on Bluetooth or grant Android permissions itself.
-- A BLE thermal printer that exposes the GATT service `000018f0-0000-1000-8000-00805f9b34fb` and writable characteristic `00002af1-0000-1000-8000-00805f9b34fb`, and accepts the ESC/POS commands sent by the demo. Not all Bluetooth printers are compatible.
+- A BLE thermal printer that exposes the GATT service `000018f0-0000-1000-8000-00805f9b34fb` and writable characteristic `00002af1-0000-1000-8000-00805f9b34fb`, and accepts the ESC/POS commands sent by the demo. Image printing, drawing, camera photos, and text rendered as an image require support for the `GS v 0` raster command. Not all Bluetooth printers are compatible.
 - Classic Bluetooth (SPP) printers are not accessible through this web app. Supporting them requires an Android-native app or native bridge.
 - Browser permission to select and connect to Bluetooth devices.
 
@@ -45,7 +45,7 @@ The project uses Node.js built-in test runner. From the project directory, run:
 npm test
 ```
 
-The suite checks CP858 text encoding, generated ESC/POS buffers, Bluetooth availability diagnostics, connection error handling, and matching English/Spanish translation keys.
+The suite checks CP858 text encoding, generated ESC/POS buffers, raster row encoding, Bluetooth availability diagnostics, connection error handling, and matching English/Spanish translation keys.
 
 ## Usage
 
@@ -98,6 +98,7 @@ Templates are stored in the browser's local storage on the current device. They 
 - **The camera cannot start:** use a browser with camera support on `localhost` or HTTPS, allow camera permission, and check that another app is not using the camera.
 - **The printer does not appear or the connection fails:** make sure it is powered on, available for pairing, and implements the GATT UUIDs listed above. ESC/POS support alone does not guarantee compatibility.
 - **The printout is cropped or misaligned:** check the configured paper width and the printer's ESC/POS capabilities.
+- **Images, drawings, camera photos, or emoji text print as characters or garbled output:** the printer may not support the `GS v 0` raster command used for these contents. Check the exact printer model and its ESC/POS command support; changing the paper width does not resolve an unsupported raster command.
 - **On iPhone or iPad:** Safari does not support Web Bluetooth; the app displays a notice with information about an alternative.
 - **The printer does not appear on Android:** this app connects to compatible BLE printers, not classic Bluetooth (SPP) printers. Make sure Bluetooth is enabled, grant the browser nearby-device access (and location access on older Android versions), and use a supported browser from an HTTPS page.
 - **The print dialog is cancelled or the connection drops:** select a device in the browser dialog. If a selected printer is reported as incompatible, it does not expose the BLE service and writable characteristic this app requires.
