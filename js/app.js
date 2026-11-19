@@ -99,9 +99,14 @@ const previewWrapper = document.querySelector('.preview-wrapper');
 const drawingCanvas = document.getElementById('drawingCanvas');
 const clearDrawingButton = document.getElementById('clearDrawingBtn');
 const cameraPreview = document.getElementById('cameraPreview');
+const cameraPlaceholder = document.getElementById('cameraPlaceholder');
+const cameraSelectLabel = document.getElementById('cameraSelectLabel');
+const cameraSelect = document.getElementById('cameraSelect');
+const cameraStatus = document.getElementById('cameraStatus');
 const startCameraButton = document.getElementById('startCameraBtn');
 const capturePhotoButton = document.getElementById('capturePhotoBtn');
 const stopCameraButton = document.getElementById('stopCameraBtn');
+const retakePhotoButton = document.getElementById('retakePhotoBtn');
 const inputTabs = [...document.querySelectorAll('.input-tab')];
 const templatesContainer = document.getElementById('templatesContainer');
 const saveTemplateBtn = document.getElementById('saveTemplateBtn');
@@ -187,13 +192,80 @@ function stopCamera() {
     }
     cameraPreview.srcObject = null;
     cameraPreview.hidden = true;
-    startCameraButton.hidden = false;
+    cameraPlaceholder.hidden = false;
+    startCameraButton.hidden = rasterSource === 'camera' && Boolean(rasterBytesResult);
     startCameraButton.disabled = false;
     capturePhotoButton.disabled = true;
     stopCameraButton.hidden = true;
 }
 
+async function updateCameraOptions(selectedDeviceId) {
+    try {
+        const cameras = (await navigator.mediaDevices.enumerateDevices())
+            .filter(device => device.kind === 'videoinput');
+        cameraSelect.replaceChildren();
+        cameras.forEach((camera, index) => {
+            const option = document.createElement('option');
+            option.value = camera.deviceId;
+            option.textContent = camera.label
+                || translations[currentLang].cameraOption.replace('{number}', String(index + 1));
+            cameraSelect.appendChild(option);
+        });
+        const hasMultipleCameras = cameras.length > 1;
+        cameraSelect.hidden = !hasMultipleCameras;
+        cameraSelectLabel.hidden = !hasMultipleCameras;
+        if (selectedDeviceId && cameras.some(camera => camera.deviceId === selectedDeviceId)) {
+            cameraSelect.value = selectedDeviceId;
+        }
+    } catch (error) {
+        console.error('Could not enumerate cameras:', error);
+    }
+}
+
+function getRasterTabId(source) {
+    return {
+        upload: 'imageTab',
+        drawing: 'drawTab',
+        camera: 'cameraTab'
+    }[source];
+}
+
+function syncImageControlsVisibility(tab = inputTabs.find(inputTab => inputTab.classList.contains('active'))) {
+    imageControls.style.display = rasterBytesResult && getRasterTabId(rasterSource) === tab?.id
+        ? 'block'
+        : 'none';
+}
+
+function clearImageSelection() {
+    loadedImage = null;
+    rasterBytesResult = null;
+    rasterSource = null;
+    currentRotation = 0;
+    uploadInput.value = '';
+    angleLabel.textContent = '0°';
+    previewWrapper.replaceChildren();
+    imageControls.style.display = 'none';
+    drawingContext.fillStyle = '#FFFFFF';
+    drawingContext.fillRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+    cameraStatus.textContent = '';
+    cameraStatus.hidden = true;
+    retakePhotoButton.hidden = true;
+    startCameraButton.hidden = false;
+    startCameraButton.disabled = false;
+}
+
 function activateInputTab(tab, moveFocus = false) {
+    const activeTab = inputTabs.find(inputTab => inputTab.classList.contains('active'));
+    const targetRasterSource = {
+        imageTab: 'upload',
+        drawTab: 'drawing',
+        cameraTab: 'camera'
+    }[tab.id];
+
+    if (activeTab !== tab && targetRasterSource && rasterSource && rasterSource !== targetRasterSource) {
+        clearImageSelection();
+    }
+
     inputTabs.forEach(inputTab => {
         const isSelected = inputTab === tab;
         inputTab.classList.toggle('active', isSelected);
@@ -202,6 +274,7 @@ function activateInputTab(tab, moveFocus = false) {
         document.getElementById(inputTab.getAttribute('aria-controls')).hidden = !isSelected;
     });
     if (tab.id !== 'cameraTab') stopCamera();
+    syncImageControlsVisibility(tab);
     if (moveFocus) tab.focus();
 }
 
@@ -232,11 +305,11 @@ function updatePreviewCanvas() {
 
     const { canvas, rasterBytes } = processImageToRaster(loadedImage, maxWidth, threshold, currentRotation);
     rasterBytesResult = rasterBytes;
-    imageControls.style.display = 'block';
 
     previewWrapper.innerHTML = '';
     previewWrapper.appendChild(canvas);
     canvas.id = 'thermalCanvas';
+    syncImageControlsVisibility();
 }
 
 function updateDrawingRaster() {
@@ -312,24 +385,32 @@ clearDrawingButton.addEventListener('click', () => {
     drawingContext.fillStyle = '#FFFFFF';
     drawingContext.fillRect(0, 0, drawingCanvas.width, drawingCanvas.height);
     if (rasterSource === 'drawing') {
-        loadedImage = null;
-        rasterBytesResult = null;
-        rasterSource = null;
-        imageControls.style.display = 'none';
+        clearImageSelection();
     }
 });
 
-startCameraButton.addEventListener('click', async () => {
+async function startCamera(deviceId = cameraSelect.value || null) {
     if (!navigator.mediaDevices?.getUserMedia) {
         alert(translations[currentLang].cameraUnsupported);
         return;
     }
 
     const requestId = ++cameraRequestId;
+    cameraStream?.getTracks().forEach(track => track.stop());
+    cameraStream = null;
+    cameraPreview.srcObject = null;
+    cameraPreview.hidden = true;
+    cameraPlaceholder.hidden = false;
     startCameraButton.disabled = true;
+    capturePhotoButton.disabled = true;
+    stopCameraButton.hidden = true;
+    cameraStatus.hidden = true;
+    retakePhotoButton.hidden = true;
     try {
         const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: { ideal: 'environment' } },
+            video: deviceId
+                ? { deviceId: { exact: deviceId } }
+                : { facingMode: { ideal: 'environment' } },
             audio: false
         });
         if (requestId !== cameraRequestId
@@ -343,9 +424,12 @@ startCameraButton.addEventListener('click', async () => {
         await cameraPreview.play();
         if (requestId !== cameraRequestId) return;
         cameraPreview.hidden = false;
+        cameraPlaceholder.hidden = true;
         startCameraButton.hidden = true;
         capturePhotoButton.disabled = false;
         stopCameraButton.hidden = false;
+        const activeDeviceId = cameraStream.getVideoTracks()[0]?.getSettings().deviceId;
+        await updateCameraOptions(activeDeviceId);
     } catch (error) {
         if (requestId !== cameraRequestId) return;
         stopCamera();
@@ -356,6 +440,24 @@ startCameraButton.addEventListener('click', async () => {
                 : 'cameraError';
         alert(translations[currentLang][messageKey]);
     }
+}
+
+startCameraButton.addEventListener('click', () => startCamera());
+cameraSelect.addEventListener('change', () => {
+    if (cameraStream) startCamera(cameraSelect.value);
+});
+stopCameraButton.addEventListener('click', () => {
+    stopCamera();
+    cameraStatus.textContent = '';
+    cameraStatus.hidden = true;
+});
+retakePhotoButton.addEventListener('click', () => {
+    clearImageSelection();
+    startCamera(cameraSelect.value || null);
+});
+navigator.mediaDevices?.addEventListener?.('devicechange', () => {
+    const activeDeviceId = cameraStream?.getVideoTracks()[0]?.getSettings().deviceId;
+    updateCameraOptions(activeDeviceId);
 });
 
 capturePhotoButton.addEventListener('click', () => {
@@ -373,7 +475,12 @@ capturePhotoButton.addEventListener('click', () => {
     currentRotation = photoCanvas.width > photoCanvas.height ? 90 : 0;
     angleLabel.textContent = `${currentRotation}°`;
     stopCamera();
+    startCameraButton.hidden = true;
+    cameraStatus.textContent = translations[currentLang].cameraPhotoReady;
+    cameraStatus.hidden = false;
+    retakePhotoButton.hidden = false;
     updatePreviewCanvas();
+    imageControls.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 });
 
 rotateButton.addEventListener('click', () => {
@@ -384,13 +491,7 @@ rotateButton.addEventListener('click', () => {
 });
 
 removeImgButton.addEventListener('click', () => {
-    loadedImage = null;
-    rasterBytesResult = null;
-    rasterSource = null;
-    uploadInput.value = '';
-    imageControls.style.display = 'none';
-    drawingContext.fillStyle = '#FFFFFF';
-    drawingContext.fillRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+    clearImageSelection();
 });
 
 thresholdRange.addEventListener('input', () => {
@@ -420,6 +521,7 @@ async function executePrint(bufferTask) {
             printButton.textContent = translations[currentLang].sendingProgress.replace('{percent}', percent);
         });
 
+        if (rasterBytesResult) clearImageSelection();
         updateStatus(true, "statusSuccess");
         printButton.innerHTML = `🖨️ <span data-i18n="printBtnText">${translations[currentLang].printBtnText}</span>`;
     } catch (error) {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'escpos-studio-v5';
+const CACHE_NAME = 'escpos-studio-v6';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',

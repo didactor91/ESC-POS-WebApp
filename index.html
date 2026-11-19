@@ -104,11 +104,18 @@
         <section id="cameraPanel" class="input-panel" role="tabpanel" aria-labelledby="cameraTab" hidden>
             <div class="card-title" data-i18n="cameraTitle">📷 Take a photo</div>
             <p class="input-hint" data-i18n="cameraHint">Camera access requires HTTPS or localhost. The photo is converted to black and white for printing.</p>
-            <video id="cameraPreview" class="camera-preview" autoplay playsinline muted hidden></video>
-            <div class="template-actions">
+            <div class="camera-viewfinder">
+                <video id="cameraPreview" class="camera-preview" autoplay playsinline muted hidden></video>
+                <p id="cameraPlaceholder" class="camera-placeholder" data-i18n="cameraPlaceholder">Your camera view will appear here.</p>
+            </div>
+            <label id="cameraSelectLabel" for="cameraSelect" data-i18n="cameraSelectLabel" hidden>Camera</label>
+            <select id="cameraSelect" class="camera-select" hidden></select>
+            <p id="cameraStatus" class="camera-status" role="status" aria-live="polite" hidden></p>
+            <div class="camera-actions">
                 <button type="button" id="startCameraBtn" class="btn-small" data-i18n="cameraStart">Start camera</button>
                 <button type="button" id="capturePhotoBtn" class="btn-small" data-i18n="cameraCapture" disabled>Take photo</button>
                 <button type="button" id="stopCameraBtn" class="btn-small" data-i18n="cameraStop" hidden>Stop camera</button>
+                <button type="button" id="retakePhotoBtn" class="btn-small" data-i18n="cameraRetake" hidden>Retake photo</button>
             </div>
         </section>
 
