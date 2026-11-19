@@ -52,7 +52,7 @@ The suite checks CP858 text encoding, generated ESC/POS buffers, raster row enco
 1. Select the paper width and print options.
 2. Use the **Text**, **Image**, **Draw**, or **Camera** tab to add ticket content. Text can be combined with an image, drawing, or photo. Save reusable text with **Save Template**; click a saved template to load it, or double-click it to delete it.
 3. In **Draw**, sign with a mouse or touchscreen. In **Camera**, start the camera and capture a photo. Camera access requires HTTPS or localhost and browser permission; the camera stops when you capture a photo or leave the tab.
-4. Adjust the image rotation and threshold as needed.
+4. Adjust the image rotation and threshold as needed. A higher threshold turns more gray pixels black for a denser print; use the preview to avoid losing detail.
 5. Choose a printer profile and paper width, then click **Connect & Print** and select the printer in the browser dialog.
 6. If transmission fails or the printer disconnects, use **Retry Last Print** to resend the buffered job.
 

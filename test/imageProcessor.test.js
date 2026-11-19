@@ -2,24 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { processImageToRaster } from '../js/imageProcessor.js';
 
-test('processImageToRaster encodes each row left-to-right with a separate raster byte', () => {
-    const width = 8;
-    const height = 2;
-    const pixels = new Uint8ClampedArray(width * height * 4);
-    for (let index = 0; index < pixels.length; index += 4) {
-        pixels[index] = 255;
-        pixels[index + 1] = 255;
-        pixels[index + 2] = 255;
-        pixels[index + 3] = 255;
-    }
-
-    for (const [x, y] of [[0, 0], [7, 0], [3, 1]]) {
-        const index = (y * width + x) * 4;
-        pixels[index] = 0;
-        pixels[index + 1] = 0;
-        pixels[index + 2] = 0;
-    }
-
+function withCanvasPixels(pixels, callback) {
     const context = {
         fillRect() {},
         save() {},
@@ -46,13 +29,7 @@ test('processImageToRaster encodes each row left-to-right with a separate raster
     });
 
     try {
-        const { rasterBytes } = processImageToRaster({ width, height }, width, 145, 0);
-
-        assert.deepStrictEqual([...rasterBytes], [
-            0x1D, 0x76, 0x30, 0x00,
-            0x01, 0x00, 0x02, 0x00,
-            0x81, 0x10
-        ]);
+        callback();
     } finally {
         if (originalDocument) {
             Object.defineProperty(globalThis, 'document', originalDocument);
@@ -60,4 +37,52 @@ test('processImageToRaster encodes each row left-to-right with a separate raster
             delete globalThis.document;
         }
     }
+}
+
+test('processImageToRaster encodes each row left-to-right with a separate raster byte', () => {
+    const width = 8;
+    const height = 2;
+    const pixels = new Uint8ClampedArray(width * height * 4);
+    for (let index = 0; index < pixels.length; index += 4) {
+        pixels[index] = 255;
+        pixels[index + 1] = 255;
+        pixels[index + 2] = 255;
+        pixels[index + 3] = 255;
+    }
+
+    for (const [x, y] of [[0, 0], [7, 0], [3, 1]]) {
+        const index = (y * width + x) * 4;
+        pixels[index] = 0;
+        pixels[index + 1] = 0;
+        pixels[index + 2] = 0;
+    }
+
+    withCanvasPixels(pixels, () => {
+        const { rasterBytes } = processImageToRaster({ width, height }, width, 145, 0);
+
+        assert.deepStrictEqual([...rasterBytes], [
+            0x1D, 0x76, 0x30, 0x00,
+            0x01, 0x00, 0x02, 0x00,
+            0x81, 0x10
+        ]);
+    });
+});
+
+test('processImageToRaster includes mid-gray pixels when the threshold is raised', () => {
+    const pixels = new Uint8ClampedArray([
+        170, 170, 170, 255,
+        255, 255, 255, 255,
+        255, 255, 255, 255,
+        255, 255, 255, 255,
+        255, 255, 255, 255,
+        255, 255, 255, 255,
+        255, 255, 255, 255,
+        255, 255, 255, 255
+    ]);
+
+    withCanvasPixels(pixels, () => {
+        const { rasterBytes } = processImageToRaster({ width: 8, height: 1 }, 8, 180, 0);
+
+        assert.strictEqual(rasterBytes[8], 0x80);
+    });
 });
